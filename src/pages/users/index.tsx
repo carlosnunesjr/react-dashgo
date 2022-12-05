@@ -18,11 +18,22 @@ import { RiAddLine, RiPencilLine } from "react-icons/ri";
 
 import Link from "next/link";
 
+import { useQuery } from "react-query";
+
 import { Header } from "../../components/Header";
 import { Pagination } from "../../components/Pagination";
 import { Sidebar } from "../../components/Siderbar";
 
 export default function UserList() {
+  const query = useQuery("users", async () => {
+    const response = await fetch("http://localhost:3000/api/users");
+    const data = await response.json();
+
+    return data;
+  });
+
+  console.log(query);
+
   const isWideVersion = useBreakpointValue({
     base: false,
     lg: true
@@ -41,17 +52,16 @@ export default function UserList() {
               Usuários
             </Heading>
 
-            <Link href="/users/create" passHref>
-              <Button
-                as="a"
-                size={"sm"}
-                fontSize={"small"}
-                colorScheme={"pink"}
-                leftIcon={<Icon as={RiAddLine} fontSize="20" />}
-              >
-                Criar novo
-              </Button>
-            </Link>
+            <Button
+              as={Link}
+              href="/users/create"
+              size={"sm"}
+              fontSize={"small"}
+              colorScheme={"pink"}
+              leftIcon={<Icon as={RiAddLine} fontSize="20" />}
+            >
+              Criar novo
+            </Button>
           </Flex>
           <Table colorScheme={"whiteAlpha"}>
             <Thead>
