@@ -8,7 +8,7 @@ import {
   SimpleGrid,
   VStack
 } from "@chakra-ui/react";
-import Link from "next/link";
+import NextLink from "next/link";
 
 import { SubmitHandler, useForm } from "react-hook-form";
 import * as yup from "yup";
@@ -104,7 +104,7 @@ export default function CreateUser() {
 
           <Flex mt="8" justify="flex-end">
             <HStack spacing="4">
-              <Button as={Link} colorScheme="whiteAlpha" href="/users">
+              <Button as={NextLink} colorScheme="whiteAlpha" href="/users">
                 Cancelar
               </Button>
               <Button type="submit" colorScheme="pink" isLoading={isSubmitting}>

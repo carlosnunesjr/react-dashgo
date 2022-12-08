@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Box,
   Button,
@@ -5,6 +6,8 @@ import {
   Flex,
   Heading,
   Icon,
+  Link,
+  Spinner,
   Table,
   Tbody,
   Td,
@@ -16,28 +19,32 @@ import {
 } from "@chakra-ui/react";
 import { RiAddLine, RiPencilLine } from "react-icons/ri";
 
-import Link from "next/link";
-
-import { useQuery } from "react-query";
+import NextLink from "next/link";
 
 import { Header } from "../../components/Header";
 import { Pagination } from "../../components/Pagination";
 import { Sidebar } from "../../components/Siderbar";
+import { useUsers } from "../../services/hooks/useUsers";
+import { queryClient } from "../../services/queryClient";
+import { api } from "../../services/api";
 
 export default function UserList() {
-  const query = useQuery("users", async () => {
-    const response = await fetch("http://localhost:3000/api/users");
-    const data = await response.json();
+  const [currentPage, setCurrentPage] = useState(1);
 
-    return data;
-  });
-
-  console.log(query);
+  const { data, isLoading, isFetching, error } = useUsers(currentPage);
 
   const isWideVersion = useBreakpointValue({
     base: false,
     lg: true
   });
+
+  async function handlePrefetchUser(userId: number) {
+    await queryClient.prefetchQuery(["user", userId], async () => {
+      const response = await api.get(`user/${userId}`);
+
+      return response.data;
+    });
+  }
 
   return (
     <Box>
@@ -50,10 +57,13 @@ export default function UserList() {
           <Flex mb={8} justify={"space-between"} align={"center"}>
             <Heading size={"lg"} fontWeight={"normal"}>
               Usuários
+              {!isLoading && isFetching && (
+                <Spinner size="sm" color="gray.500" ml="4" />
+              )}
             </Heading>
 
             <Button
-              as={Link}
+              as={NextLink}
               href="/users/create"
               size={"sm"}
               fontSize={"small"}
@@ -63,47 +73,75 @@ export default function UserList() {
               Criar novo
             </Button>
           </Flex>
-          <Table colorScheme={"whiteAlpha"}>
-            <Thead>
-              <Tr>
-                <Th px={[4, 4, 6]} color={"gray.300"} width={8}>
-                  <Checkbox colorScheme={"pink"} />
-                </Th>
-                <Th>Usuário</Th>
-                {isWideVersion && <Th>Data de cadastro</Th>}
-                <Th width={8}></Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              <Tr>
-                <Td px={[4, 4, 6]}>
-                  <Checkbox colorScheme={"pink"} />
-                </Td>
-                <Td>
-                  <Box>
-                    <Text fontWeight={"bold"}>Carlos Nunes</Text>
-                    <Text fontSize={"sm"} color={"gray.300"}>
-                      cnunes@teste.com
-                    </Text>
-                  </Box>
-                </Td>
-                {isWideVersion && <Td>04 de Novembro de 2022</Td>}
-                <Td>
-                  <Button
-                    as={"a"}
-                    size={"sm"}
-                    fontSize="sm"
-                    colorScheme={"purple"}
-                    leftIcon={<Icon as={RiPencilLine} fontSize="16" />}
-                  >
-                    Editar
-                  </Button>
-                </Td>
-              </Tr>
-            </Tbody>
-          </Table>
+          {isLoading ? (
+            <Flex justify="center">
+              <Spinner />
+            </Flex>
+          ) : error ? (
+            <Flex justify="center">
+              <Text>Falha ao obter dados dos usuários</Text>
+            </Flex>
+          ) : (
+            <>
+              <Table colorScheme={"whiteAlpha"}>
+                <Thead>
+                  <Tr>
+                    <Th px={[4, 4, 6]} color={"gray.300"} width={8}>
+                      <Checkbox colorScheme={"pink"} />
+                    </Th>
+                    <Th>Usuário</Th>
+                    {isWideVersion && <Th>Data de cadastro</Th>}
+                    <Th width={8}></Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {data.users?.map(user => {
+                    return (
+                      <Tr key={user.id}>
+                        <Td px={[4, 4, 6]}>
+                          <Checkbox colorScheme={"pink"} />
+                        </Td>
+                        <Td>
+                          <Box>
+                            <Link
+                              color="purple.400"
+                              onMouseEnter={() =>
+                                handlePrefetchUser(Number(user.id))
+                              }
+                            >
+                              <Text fontWeight={"bold"}>{user.name}</Text>
+                            </Link>
+                            <Text fontSize={"sm"} color={"gray.300"}>
+                              {user.email}
+                            </Text>
+                          </Box>
+                        </Td>
+                        {isWideVersion && <Td>{user.created_at}</Td>}
+                        <Td>
+                          <Button
+                            as={"a"}
+                            href="/"
+                            size={"sm"}
+                            fontSize="sm"
+                            colorScheme={"purple"}
+                            leftIcon={<Icon as={RiPencilLine} fontSize="16" />}
+                          >
+                            Editar
+                          </Button>
+                        </Td>
+                      </Tr>
+                    );
+                  })}
+                </Tbody>
+              </Table>
 
-          <Pagination />
+              <Pagination
+                totalCountOfRegisters={data.totalCount}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+              />
+            </>
+          )}
         </Box>
       </Flex>
     </Box>

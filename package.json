@@ -19,6 +19,7 @@
     "@types/react-dom": "18.0.9",
     "@withshepherd/faker": "^5.5.5",
     "apexcharts": "^3.36.3",
+    "axios": "^1.2.1",
     "eslint": "8.27.0",
     "eslint-config-next": "13.0.3",
     "framer-motion": "^6",
